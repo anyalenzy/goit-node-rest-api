@@ -65,7 +65,11 @@ export const updateStatusContact = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { favorite } = req.body;
-    const data = await Contact.findByIdAndUpdate(id, favorite, { new: true });
+    const data = await Contact.findByIdAndUpdate(
+      id,
+      { favorite },
+      { new: true }
+    );
     if (!data) {
       throw HttpError(404);
     }
