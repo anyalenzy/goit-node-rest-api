@@ -4,19 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
 
-const DB_URI = process.env.DB_URI;
-
-async function run() {
-  try {
-    await mongoose.connect(DB_URI);
-    console.log("Database connection successful");
-  } catch (error) {
-    console.log(`Database connection failure: ${error.message}`);
-    process.exit(1);
-  } finally {
-    await mongoose.disconnect();
-  }
-}
+const { DB_URI, PORT } = process.env;
 
 import contactsRouter from "./routes/contactsRouter.js";
 
@@ -37,8 +25,14 @@ app.use((error, req, res, next) => {
   res.status(status).json({ message });
 });
 
-app.listen(3000, () => {
-  console.log("Server is running. Use our API on port: 3000");
-});
-
-run().catch(console.error);
+mongoose
+  .connect(DB_URI)
+  .then(() => {
+    app.listen(PORT || 3000, () => {
+      console.log("Database connection successful");
+    });
+  })
+  .catch((error) => {
+    console.log(`Database connection failure: ${error.message}`);
+    process.exit(1);
+  });
