@@ -15,21 +15,28 @@ import {
 } from "../schemas/contactsSchemas.js";
 
 import validateBody from "../helpers/validateBody.js";
+import validateObjectId from "../helpers/validateObjectId.js";
 
 const contactsRouter = express.Router();
 
 contactsRouter.get("/", getAllContacts);
 
-contactsRouter.get("/:id", getOneContact);
+contactsRouter.get("/:id", validateObjectId, getOneContact);
 
-contactsRouter.delete("/:id", deleteContact);
+contactsRouter.delete("/:id", validateObjectId, deleteContact);
 
 contactsRouter.post("/", validateBody(createContactSchema), createContact);
 
-contactsRouter.put("/:id", validateBody(updateContactSchema), updateContact);
+contactsRouter.put(
+  "/:id",
+  validateObjectId,
+  validateBody(updateContactSchema),
+  updateContact
+);
 
 contactsRouter.patch(
   "/:id/favorite",
+  validateObjectId,
   validateBody(updateFavoriteSchema),
   updateStatusContact
 );
