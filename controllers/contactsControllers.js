@@ -5,7 +5,22 @@ export const getAllContacts = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const data = await Contact.find();
+    const skip = (page - 1) * limit;
+    const owner = req.user._id;
+    const { favorite } = req.query;
+    const favoriteFilter =
+      favorite === "true" ? true : favorite === "false" ? false : undefined;
+    const filter = { owner };
+    if (favoriteFilter !== undefined) {
+      filter.favorite = favoriteFilter;
+    }
+    if (isNaN(page) || page < 1) {
+      throw HttpError(400, `Invalid page number`);
+    }
+    if (isNaN(limit) || limit < 1) {
+      throw HttpError(400, `Invalid limit number`);
+    }
+    const data = await Contact.find(filter).skip(skip).limit(limit);
     res.json(data);
   } catch (error) {
     next(error);
