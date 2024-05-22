@@ -10,8 +10,10 @@ export const register = async (req, res, next) => {
       return next(HttpError(409, "Email in use"));
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: passwordHash });
-    res.status(201).json(newUser);
+    const newUser = await User.create({ ...req.body, password: passwordHash });
+    res.status(201).json({
+      user: { email: newUser.email, subscription: newUser.subscription },
+    });
   } catch (error) {
     next(error);
   }
