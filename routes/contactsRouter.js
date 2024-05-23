@@ -16,19 +16,26 @@ import {
 
 import validateBody from "../helpers/validateBody.js";
 import validateObjectId from "../helpers/validateObjectId.js";
+import auth from "../middlewares/auth.js";
 
 const contactsRouter = express.Router();
 
-contactsRouter.get("/", getAllContacts);
+contactsRouter.get("/", auth, getAllContacts);
 
-contactsRouter.get("/:id", validateObjectId, getOneContact);
+contactsRouter.get("/:id", auth, validateObjectId, getOneContact);
 
-contactsRouter.delete("/:id", validateObjectId, deleteContact);
+contactsRouter.delete("/:id", auth, validateObjectId, deleteContact);
 
-contactsRouter.post("/", validateBody(createContactSchema), createContact);
+contactsRouter.post(
+  "/",
+  auth,
+  validateBody(createContactSchema),
+  createContact
+);
 
 contactsRouter.put(
   "/:id",
+  auth,
   validateObjectId,
   validateBody(updateContactSchema),
   updateContact
@@ -36,6 +43,7 @@ contactsRouter.put(
 
 contactsRouter.patch(
   "/:id/favorite",
+  auth,
   validateObjectId,
   validateBody(updateFavoriteSchema),
   updateStatusContact
