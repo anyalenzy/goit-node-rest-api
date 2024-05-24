@@ -3,22 +3,12 @@ import Contact from "../models/contact.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page = 1, limit = 10, favorite } = req.query;
     const skip = (page - 1) * limit;
-    const owner = req.user._id;
-    const { favorite } = req.query;
-    const favoriteFilter =
-      favorite === "true" ? true : favorite === "false" ? false : undefined;
+    const owner = req.user.id;
     const filter = { owner };
-    if (favoriteFilter !== undefined) {
-      filter.favorite = favoriteFilter;
-    }
-    if (isNaN(page) || page < 1) {
-      throw HttpError(400, `Invalid page number`);
-    }
-    if (isNaN(limit) || limit < 1) {
-      throw HttpError(400, `Invalid limit number`);
+    if (favorite !== undefined) {
+      filter.favorite = favorite;
     }
     const data = await Contact.find(filter).skip(skip).limit(limit);
     res.json(data);
@@ -30,7 +20,7 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const data = await Contact.findById(id);
+    const data = await Contact.findOne({ _id: id, owner: req.user.id });
     if (!data) {
       throw HttpError(404);
     }
@@ -43,7 +33,10 @@ export const getOneContact = async (req, res, next) => {
 export const deleteContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const data = await Contact.findByIdAndDelete(id);
+    const data = await Contact.findOneAndDelete({
+      _id: id,
+      owner: req.user.id,
+    });
     if (!data) {
       throw HttpError(404);
     }
@@ -55,7 +48,9 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
   try {
-    const data = await Contact.create(req.body);
+    const owner = req.user.id;
+    console.log(req.user);
+    const data = await Contact.create({ ...req.body, owner });
     res.status(201).json(data);
   } catch (error) {
     next(error);
@@ -68,7 +63,13 @@ export const updateContact = async (req, res, next) => {
     if (Object.keys(req.body).length === 0) {
       throw HttpError(400, `Body must have at least one field`);
     }
-    const data = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+    const data = await Contact.findOneAndUpdate(
+      { _id: id, owner: req.user.id },
+      req.body,
+      {
+        new: true,
+      }
+    );
     if (!data) {
       throw HttpError(404);
     }
@@ -82,8 +83,8 @@ export const updateStatusContact = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { favorite } = req.body;
-    const data = await Contact.findByIdAndUpdate(
-      id,
+    const data = await Contact.findOneAndUpdate(
+      { _id: id, owner: req.user.id },
       { favorite },
       { new: true }
     );

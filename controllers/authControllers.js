@@ -45,7 +45,7 @@ export const login = async (req, res, next) => {
 
     res.status(200).json({
       token: token,
-      user: { email: newUser.email, subscription: newUser.subscription },
+      user: { email: user.email, subscription: user.subscription },
     });
   } catch (error) {
     next(error);
@@ -53,9 +53,8 @@ export const login = async (req, res, next) => {
 };
 
 export const logout = async (req, res, next) => {
-  const { _id } = req.user.id;
   try {
-    await User.findByIdAndUpdate(_id, { token: null }, { new: true });
+    await User.findByIdAndUpdate(req.user.id, { token: null }, { new: true });
 
     res.status(204).end();
   } catch (error) {
@@ -64,9 +63,8 @@ export const logout = async (req, res, next) => {
 };
 
 export const getCurrentUser = async (req, res, next) => {
-  const { _id } = req.user;
   try {
-    const user = await User.findById(_id);
+    const user = await User.findById(req.user.id);
     res.json({
       email: user.email,
       subscription: user.subscription,
@@ -78,14 +76,15 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const updateSubscription = async (req, res, next) => {
   try {
-    const { subscription: updatedSubscription } = req.body;
-    const { _id } = req.user;
-    const validSubscriptions = ["starter", "pro", "business"];
-    if (!validSubscriptions.includes(updatedSubscription)) {
-      return next(HttpError(400, "Invalid subscription type"));
+    if (
+      Object.keys(req.body).length !== 1 ||
+      Object.keys(req.body)[0] !== "subscription"
+    ) {
+      return next(HttpError(400, "Body must have one field: subscription"));
     }
+    const { subscription: updatedSubscription } = req.body;
     const data = await User.findByIdAndUpdate(
-      { _id },
+      req.user.id,
       { subscription: updatedSubscription },
       { new: true }
     );
