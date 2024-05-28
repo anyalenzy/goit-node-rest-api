@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import gravatar from "gravatar";
 import User from "../models/user.js";
 import HttpError from "../helpers/HttpError.js";
 import jwt from "jsonwebtoken";
@@ -11,9 +12,18 @@ export const register = async (req, res, next) => {
       return next(HttpError(409, "Email in use"));
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ ...req.body, password: passwordHash });
+    const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mm" });
+    const newUser = await User.create({
+      ...req.body,
+      password: passwordHash,
+      avatarURL,
+    });
     res.status(201).json({
-      user: { email: newUser.email, subscription: newUser.subscription },
+      user: {
+        email: newUser.email,
+        subscription: newUser.subscription,
+        avatarURL: newUser.avatarURL,
+      },
     });
   } catch (error) {
     next(error);
