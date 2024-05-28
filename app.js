@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 import mongoose from "mongoose";
 import "dotenv/config";
+import path from "node:path";
 
 const { DB_URI, PORT } = process.env;
 
@@ -14,6 +15,7 @@ const app = express();
 app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
+app.use("/avatars", express.static(path.resolve("public/avatars")));
 
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", authRouter);
