@@ -12,7 +12,7 @@ export const register = async (req, res, next) => {
       return next(HttpError(409, "Email in use"));
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mm" });
+    const avatarURL = gravatar.url(email);
     const newUser = await User.create({
       ...req.body,
       password: passwordHash,
@@ -42,7 +42,7 @@ export const login = async (req, res, next) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch === false) {
-      next(HttpError(401, "Email or password is wrong"));
+      return next(HttpError(401, "Email or password is wrong"));
     }
 
     const token = jwt.sign(
@@ -55,7 +55,11 @@ export const login = async (req, res, next) => {
 
     res.status(200).json({
       token: token,
-      user: { email: user.email, subscription: user.subscription },
+      user: {
+        email: user.email,
+        subscription: user.subscription,
+        avatarURL: user.avatarURL,
+      },
     });
   } catch (error) {
     next(error);
@@ -78,6 +82,7 @@ export const getCurrentUser = async (req, res, next) => {
     res.json({
       email: user.email,
       subscription: user.subscription,
+      avatarURL: user.avatarURL,
     });
   } catch (error) {
     next(error);
@@ -98,7 +103,10 @@ export const updateSubscription = async (req, res, next) => {
       { subscription: updatedSubscription },
       { new: true }
     );
-    res.status(200).json(data);
+    res.status(200).json({
+      id: data._id,
+      subscription: data.subscription,
+    });
   } catch (error) {
     next(error);
   }
