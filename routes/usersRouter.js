@@ -6,7 +6,11 @@ import {
   updateSubscription,
   getCurrentUser,
 } from "../controllers/authControllers.js";
-import { changeAvatar } from "../controllers/usersControllers.js";
+import {
+  changeAvatar,
+  verifyEmail,
+  resendVerifyEmail,
+} from "../controllers/usersControllers.js";
 import upload from "../middlewares/upload.js";
 import auth from "../middlewares/auth.js";
 
@@ -15,6 +19,7 @@ import {
   registerSchema,
   loginSchema,
   subscriptionShema,
+  emailSchemas,
 } from "../schemas/usersShemas.js";
 
 const usersRouter = express.Router();
@@ -29,5 +34,7 @@ usersRouter.patch(
   updateSubscription
 );
 usersRouter.patch("/avatars", auth, upload.single("avatar"), changeAvatar);
+usersRouter.get("/verify/:verificationToken", verifyEmail);
+usersRouter.post("/verify", validateBody(emailSchemas), resendVerifyEmail);
 
 export default usersRouter;

@@ -3,6 +3,9 @@ import gravatar from "gravatar";
 import User from "../models/user.js";
 import HttpError from "../helpers/HttpError.js";
 import jwt from "jsonwebtoken";
+import sendMail from "../helpers/mailSender.js";
+
+const { JWT_SECRET, BASE_URI } = process.env;
 
 export const register = async (req, res, next) => {
   try {
@@ -13,10 +16,21 @@ export const register = async (req, res, next) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
+    const verificationToken = crypto.randomUUID();
+
+    const message = {
+      to: email,
+      from: "anya.dudnik.91@gmail.com",
+      subject: "Verify email",
+      html: `To confirm your email please click on <a target="_blank" href="${BASE_URI}/api/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm your email please open the link ${BASE_URI}/api/users/verify/${verificationToken}`,
+    };
+    sendMail(message);
     const newUser = await User.create({
       ...req.body,
       password: passwordHash,
       avatarURL,
+      verificationToken,
     });
     res.status(201).json({
       user: {
@@ -44,12 +58,13 @@ export const login = async (req, res, next) => {
     if (isMatch === false) {
       return next(HttpError(401, "Email or password is wrong"));
     }
+    if (user.verify === false) {
+      return next(HttpError(401, "Please verify your email"));
+    }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     await User.findByIdAndUpdate(user._id, { token }, { new: true });
 
